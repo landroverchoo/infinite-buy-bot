@@ -5,38 +5,79 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>라오어 무한매수법 시뮬레이터</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700;800&display=swap" rel="stylesheet">
     <style>
-        body { background: #1a1a2e; color: #eee; font-family: 'Segoe UI', sans-serif; }
-        .card { background: #16213e; border: 1px solid #0f3460; border-radius: 12px; }
-        .card-header { background: #0f3460; border-radius: 12px 12px 0 0 !important; }
-        .btn-primary { background: #e94560; border: none; }
-        .btn-primary:hover { background: #c73e54; }
-        .btn-success { background: #4CAF50; border: none; }
-        .form-control, .form-select { background: #1a1a2e; color: #eee; border: 1px solid #0f3460; }
-        .form-control:focus, .form-select:focus { background: #1a1a2e; color: #eee; border-color: #e94560; box-shadow: 0 0 0 0.2rem rgba(233,69,96,0.25); }
-        .table { color: #eee; }
-        .table-striped>tbody>tr:nth-of-type(odd) { color: #eee; background-color: rgba(15,52,96,0.3); }
-        .hero { text-align: center; padding: 40px 0 20px; }
-        .hero h1 { font-size: 2.5rem; font-weight: bold; }
-        .hero .subtitle { color: #e94560; font-size: 1.2rem; }
-        .stat-card { background: #0f3460; border-radius: 10px; padding: 20px; text-align: center; }
-        .stat-card .value { font-size: 2rem; font-weight: bold; color: #e94560; }
-        .stat-card .label { color: #aaa; font-size: 0.9rem; }
+        * { font-family: 'Nanum Gothic', sans-serif; }
+        body { background: #f5f7fa; color: #333; font-size: 16px; }
+        .card { background: #fff; border: 1px solid #e0e0e0; border-radius: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+        .card-header { background: #1a73e8; color: #fff; border-radius: 16px 16px 0 0 !important; padding: 14px 20px; }
+        .card-header h5 { margin: 0; font-weight: 800; font-size: 1.1rem; }
+        .btn-primary { background: #1a73e8; border: none; font-weight: 700; padding: 12px; font-size: 1rem; border-radius: 10px; }
+        .btn-primary:hover { background: #1557b0; }
+        .btn-success { background: #34a853; border: none; font-weight: 700; padding: 12px; font-size: 1rem; border-radius: 10px; }
+        .btn-success:hover { background: #2d8f47; }
+        .form-control, .form-select {
+            background: #fff; color: #333; border: 1.5px solid #ddd;
+            border-radius: 10px; padding: 10px 14px; font-size: 1rem;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: #1a73e8; box-shadow: 0 0 0 3px rgba(26,115,232,0.15);
+        }
+        .form-label { font-weight: 700; color: #555; margin-bottom: 4px; font-size: 0.9rem; }
+        .table { color: #333; font-size: 0.85rem; }
+        .table th { background: #f0f4f8; font-weight: 800; position: sticky; top: 0; }
+        .table-striped>tbody>tr:nth-of-type(odd) { background-color: #f8fafc; }
+        .hero { text-align: center; padding: 30px 10px 15px; }
+        .hero h1 { font-size: 1.8rem; font-weight: 800; color: #1a73e8; }
+        .hero .subtitle { color: #666; font-size: 1rem; margin-top: 4px; }
+        .stat-card {
+            background: #fff; border-radius: 14px; padding: 16px 10px;
+            text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            border: 1px solid #e8e8e8;
+        }
+        .stat-card .value { font-size: 1.6rem; font-weight: 800; color: #1a73e8; }
+        .stat-card .label { color: #888; font-size: 0.8rem; font-weight: 700; margin-top: 2px; }
         #loading { display: none; }
-        .spinner-border { width: 3rem; height: 3rem; }
-        .tab-content { padding-top: 20px; }
-        .nav-tabs .nav-link { color: #aaa; }
-        .nav-tabs .nav-link.active { background: #16213e; color: #e94560; border-color: #0f3460 #0f3460 #16213e; }
+        .spinner-border { width: 2.5rem; height: 2.5rem; color: #1a73e8 !important; }
+        .nav-tabs { border-bottom: 2px solid #e0e0e0; }
+        .nav-tabs .nav-link {
+            color: #888; font-weight: 700; font-size: 1rem;
+            border: none; padding: 10px 20px; border-radius: 10px 10px 0 0;
+        }
+        .nav-tabs .nav-link.active {
+            background: #fff; color: #1a73e8;
+            border: 2px solid #e0e0e0; border-bottom: 2px solid #fff;
+        }
+        .form-check-input:checked { background-color: #1a73e8; border-color: #1a73e8; }
+        footer { color: #aaa; font-size: 0.8rem; }
+
+        /* 모바일 최적화 */
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 1.4rem; }
+            .hero .subtitle { font-size: 0.85rem; }
+            .stat-card .value { font-size: 1.3rem; }
+            .stat-card .label { font-size: 0.75rem; }
+            .stat-card { padding: 12px 6px; }
+            .stats-row .col { padding: 4px !important; }
+            .card-body { padding: 14px; }
+            .card-header { padding: 12px 14px; }
+            .table { font-size: 0.75rem; }
+            .table td, .table th { padding: 6px 4px; white-space: nowrap; }
+            .nav-tabs .nav-link { font-size: 0.9rem; padding: 8px 14px; }
+            .btn-primary, .btn-success { padding: 10px; }
+            .container { padding-left: 10px; padding-right: 10px; }
+            .chart-container { overflow-x: auto; }
+            .chart-container img { min-width: 600px; }
+        }
     </style>
 </head>
 <body>
-    <div class="container py-4">
+    <div class="container py-3">
         <div class="hero">
             <h1>🚀 무한매수법 시뮬레이터</h1>
-            <p class="subtitle">라오어의 무한매수 전략 백테스트 & 주문 표 생성</p>
+            <p class="subtitle">라오어의 무한매수 전략 백테스트 & 주문 표</p>
         </div>
 
-        <!-- 탭 -->
         <ul class="nav nav-tabs" role="tablist">
             <li class="nav-item">
                 <a class="nav-link active" data-bs-toggle="tab" href="#backtest-tab">📊 백테스트</a>
@@ -46,49 +87,63 @@
             </li>
         </ul>
 
-        <div class="tab-content">
+        <div class="tab-content mt-3">
             <!-- 백테스트 탭 -->
             <div class="tab-pane fade show active" id="backtest-tab">
-                <div class="row mt-3">
-                    <div class="col-md-4">
+                <div class="row g-3">
+                    <div class="col-12 col-md-4">
                         <div class="card">
-                            <div class="card-header"><h5 class="mb-0">⚙️ 설정</h5></div>
+                            <div class="card-header"><h5>⚙️ 설정</h5></div>
                             <div class="card-body">
                                 <div class="mb-3">
                                     <label class="form-label">종목 코드</label>
-                                    <input type="text" class="form-control" id="ticker" value="TQQQ">
+                                    <input type="text" class="form-control" id="ticker" value="TQQQ" placeholder="예: TQQQ, SOXL, QQQ">
                                 </div>
-                                <div class="mb-3">
-                                    <label class="form-label">분할 횟수</label>
-                                    <select class="form-select" id="divisions">
-                                        <option value="20">20분할</option>
-                                        <option value="40" selected>40분할</option>
-                                    </select>
+                                <div class="row g-2 mb-3">
+                                    <div class="col-6">
+                                        <label class="form-label">분할 횟수</label>
+                                        <select class="form-select" id="divisions">
+                                            <option value="20">20분할</option>
+                                            <option value="40" selected>40분할</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label">목표 수익률</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="target_profit_pct" value="5.0" step="0.5">
+                                            <span class="input-group-text" style="background:#f0f4f8;border:1.5px solid #ddd;">%</span>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">총 투자금 (원)</label>
                                     <input type="number" class="form-control" id="total_investment" value="10000000">
                                 </div>
-                                <div class="mb-3">
-                                    <label class="form-label">목표 수익률 (%)</label>
-                                    <input type="number" class="form-control" id="target_profit_pct" value="5.0" step="0.5">
+                                <div class="row g-2 mb-3">
+                                    <div class="col-6">
+                                        <div class="form-check mt-2">
+                                            <input type="checkbox" class="form-check-input" id="use_loc" checked>
+                                            <label class="form-check-label" style="font-weight:700;color:#555;">LOC 사용</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label">LOC 할인율</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="loc_discount_pct" value="1.0" step="0.1">
+                                            <span class="input-group-text" style="background:#f0f4f8;border:1.5px solid #ddd;">%</span>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="mb-3 form-check">
-                                    <input type="checkbox" class="form-check-input" id="use_loc" checked>
-                                    <label class="form-check-label">LOC 주문 사용</label>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">LOC 할인율 (%)</label>
-                                    <input type="number" class="form-control" id="loc_discount_pct" value="1.0" step="0.1">
-                                </div>
-                                <hr>
-                                <div class="mb-3">
-                                    <label class="form-label">시작일</label>
-                                    <input type="date" class="form-control" id="start_date" value="2024-01-01">
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">종료일</label>
-                                    <input type="date" class="form-control" id="end_date" value="2024-12-31">
+                                <hr style="border-color:#e8e8e8;">
+                                <div class="row g-2 mb-3">
+                                    <div class="col-6">
+                                        <label class="form-label">시작일</label>
+                                        <input type="date" class="form-control" id="start_date" value="2024-01-01">
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label">종료일</label>
+                                        <input type="date" class="form-control" id="end_date" value="2024-12-31">
+                                    </div>
                                 </div>
                                 <button class="btn btn-primary w-100" onclick="runBacktest()">
                                     🚀 백테스트 실행
@@ -96,33 +151,33 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-8">
-                        <!-- 로딩 -->
+                    <div class="col-12 col-md-8">
                         <div id="loading" class="text-center py-5">
-                            <div class="spinner-border text-danger" role="status"></div>
-                            <p class="mt-3">데이터 가져오는 중... ⏳</p>
+                            <div class="spinner-border" role="status"></div>
+                            <p class="mt-3" style="color:#666;font-weight:700;">데이터 가져오는 중... ⏳</p>
                         </div>
 
-                        <!-- 결과 -->
                         <div id="results" style="display:none;">
-                            <!-- 성과 카드 -->
-                            <div class="row mb-3" id="stats-row"></div>
+                            <div class="row g-2 mb-3 stats-row" id="stats-row"></div>
 
-                            <!-- 차트 -->
                             <div class="card mb-3">
-                                <div class="card-header"><h5 class="mb-0">📈 차트</h5></div>
-                                <div class="card-body text-center">
-                                    <img id="chart-img" class="img-fluid" style="border-radius: 8px;">
+                                <div class="card-header"><h5>📈 차트</h5></div>
+                                <div class="card-body chart-container">
+                                    <img id="chart-img" class="img-fluid" style="border-radius: 8px; width:100%;">
                                 </div>
                             </div>
 
-                            <!-- 매매 기록 -->
                             <div class="card">
-                                <div class="card-header"><h5 class="mb-0">📝 매매 기록</h5></div>
-                                <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                                <div class="card-header"><h5>📝 매매 기록</h5></div>
+                                <div class="card-body" style="max-height: 400px; overflow: auto;">
                                     <div id="trades-table"></div>
                                 </div>
                             </div>
+                        </div>
+
+                        <div id="placeholder" class="text-center py-5" style="color:#aaa;">
+                            <p style="font-size:3rem;">📊</p>
+                            <p style="font-weight:700;">설정 후 "백테스트 실행" 버튼을 누르세요</p>
                         </div>
                     </div>
                 </div>
@@ -130,33 +185,41 @@
 
             <!-- 주문 표 탭 -->
             <div class="tab-pane fade" id="table-tab">
-                <div class="row mt-3">
-                    <div class="col-md-4">
+                <div class="row g-3">
+                    <div class="col-12 col-md-4">
                         <div class="card">
-                            <div class="card-header"><h5 class="mb-0">⚙️ 시뮬레이션 설정</h5></div>
+                            <div class="card-header" style="background:#34a853;"><h5>⚙️ 시뮬레이션 설정</h5></div>
                             <div class="card-body">
                                 <div class="mb-3">
                                     <label class="form-label">시작 가격</label>
                                     <input type="number" class="form-control" id="start_price" value="100" step="1">
                                 </div>
                                 <div class="mb-3">
-                                    <label class="form-label">회차별 가격 변화율 (%)</label>
-                                    <input type="number" class="form-control" id="price_step" value="-1.0" step="0.5">
+                                    <label class="form-label">회차별 가격 변화율</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="price_step" value="-1.0" step="0.5">
+                                        <span class="input-group-text" style="background:#f0f4f8;border:1.5px solid #ddd;">%</span>
+                                    </div>
                                 </div>
-                                <div class="mb-3">
-                                    <label class="form-label">분할 횟수</label>
-                                    <select class="form-select" id="table_divisions">
-                                        <option value="20">20분할</option>
-                                        <option value="40" selected>40분할</option>
-                                    </select>
+                                <div class="row g-2 mb-3">
+                                    <div class="col-6">
+                                        <label class="form-label">분할 횟수</label>
+                                        <select class="form-select" id="table_divisions">
+                                            <option value="20">20분할</option>
+                                            <option value="40" selected>40분할</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label">목표 수익률</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="table_profit" value="5.0" step="0.5">
+                                            <span class="input-group-text" style="background:#f0f4f8;border:1.5px solid #ddd;">%</span>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">총 투자금 (원)</label>
                                     <input type="number" class="form-control" id="table_investment" value="10000000">
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">목표 수익률 (%)</label>
-                                    <input type="number" class="form-control" id="table_profit" value="5.0" step="0.5">
                                 </div>
                                 <button class="btn btn-success w-100" onclick="generateTable()">
                                     📋 주문 표 생성
@@ -164,12 +227,15 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-8">
+                    <div class="col-12 col-md-8">
                         <div class="card">
-                            <div class="card-header"><h5 class="mb-0">📋 주문 표</h5></div>
-                            <div class="card-body" style="max-height: 600px; overflow-y: auto;">
+                            <div class="card-header" style="background:#34a853;"><h5>📋 주문 표</h5></div>
+                            <div class="card-body" style="max-height: 600px; overflow: auto;">
                                 <div id="order-table">
-                                    <p class="text-muted text-center py-5">설정 후 "주문 표 생성" 버튼을 클릭하세요</p>
+                                    <p class="text-center py-5" style="color:#aaa;">
+                                        <span style="font-size:3rem;">📋</span><br>
+                                        <span style="font-weight:700;">설정 후 "주문 표 생성" 버튼을 누르세요</span>
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -178,8 +244,8 @@
             </div>
         </div>
 
-        <footer class="text-center mt-4 py-3" style="color: #555;">
-            라오어 무한매수법 시뮬레이터 v1.0 | ⚠️ 투자 손실 책임은 사용자에게 있습니다
+        <footer class="text-center mt-4 py-3">
+            무한매수법 시뮬레이터 v1.0 | ⚠️ 투자 손실 책임은 사용자에게 있습니다
         </footer>
     </div>
 
@@ -188,6 +254,7 @@
         async function runBacktest() {
             document.getElementById('loading').style.display = 'block';
             document.getElementById('results').style.display = 'none';
+            document.getElementById('placeholder').style.display = 'none';
 
             const payload = {
                 ticker: document.getElementById('ticker').value,
@@ -209,44 +276,39 @@
                 const data = await resp.json();
 
                 if (data.success) {
-                    // 성과 카드
                     const perf = data.performance;
-                    const investment = parseInt(payload.total_investment).toLocaleString();
+                    const retColor = perf.total_return_pct >= 0 ? '#ea4335' : '#1a73e8';
                     document.getElementById('stats-row').innerHTML = `
-                        <div class="col-3"><div class="stat-card">
-                            <div class="value">${perf.total_return_pct}%</div>
+                        <div class="col-3 col"><div class="stat-card">
+                            <div class="value" style="color:${retColor}">${perf.total_return_pct}%</div>
                             <div class="label">총 수익률</div>
                         </div></div>
-                        <div class="col-3"><div class="stat-card">
+                        <div class="col-3 col"><div class="stat-card">
                             <div class="value">${perf.cycles_completed}</div>
                             <div class="label">완료 사이클</div>
                         </div></div>
-                        <div class="col-3"><div class="stat-card">
+                        <div class="col-3 col"><div class="stat-card">
                             <div class="value">${perf.total_cycles}</div>
                             <div class="label">총 사이클</div>
                         </div></div>
-                        <div class="col-3"><div class="stat-card">
+                        <div class="col-3 col"><div class="stat-card">
                             <div class="value">${data.total_trades}</div>
-                            <div class="label">총 매매 횟수</div>
+                            <div class="label">매매 횟수</div>
                         </div></div>
                     `;
-
-                    // 차트
                     if (data.chart) {
                         document.getElementById('chart-img').src = 'data:image/png;base64,' + data.chart;
                     }
-
-                    // 매매 기록
                     document.getElementById('trades-table').innerHTML = data.trades_html;
-
                     document.getElementById('results').style.display = 'block';
                 } else {
                     alert('오류: ' + data.error);
+                    document.getElementById('placeholder').style.display = 'block';
                 }
             } catch (e) {
                 alert('요청 실패: ' + e.message);
+                document.getElementById('placeholder').style.display = 'block';
             }
-
             document.getElementById('loading').style.display = 'none';
         }
 
@@ -260,7 +322,6 @@
                 use_loc: true,
                 loc_discount_pct: 1.0,
             };
-
             try {
                 const resp = await fetch('/api/order_table', {
                     method: 'POST',
