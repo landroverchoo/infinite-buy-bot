@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>라오어 무한매수법 시뮬레이터</title>
+    <title>라오어 무한매수법 V3.0 시뮬레이터</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700;800&display=swap" rel="stylesheet">
     <style>
@@ -74,7 +74,7 @@
 <body>
     <div class="container py-3">
         <div class="hero">
-            <h1>🚀 무한매수법 시뮬레이터</h1>
+            <h1>🚀 무한매수법 V3.0 시뮬레이터</h1>
             <p class="subtitle">라오어의 무한매수 전략 백테스트 & 주문 표</p>
         </div>
 
@@ -97,14 +97,18 @@
                             <div class="card-body">
                                 <div class="mb-3">
                                     <label class="form-label">종목 코드</label>
-                                    <input type="text" class="form-control" id="ticker" value="TQQQ" placeholder="예: TQQQ, SOXL, QQQ">
+                                    <select class="form-select" id="ticker" onchange="updateStarFormula()">
+                                        <option value="TQQQ" selected>TQQQ (별% = 15 - 1.5T)</option>
+                                        <option value="SOXL">SOXL (별% = 20 - 2T)</option>
+                                    </select>
                                 </div>
                                 <div class="row g-2 mb-3">
                                     <div class="col-6">
                                         <label class="form-label">분할 횟수</label>
                                         <select class="form-select" id="divisions">
-                                            <option value="20">20분할</option>
-                                            <option value="40" selected>40분할</option>
+                                            <option value="20">20분할 (고위험)</option>
+                                            <option value="30">30분할</option>
+                                            <option value="40" selected>40분할 (권장)</option>
                                         </select>
                                     </div>
                                     <div class="col-6">
@@ -118,21 +122,6 @@
                                 <div class="mb-3">
                                     <label class="form-label">총 투자금 (원)</label>
                                     <input type="number" class="form-control" id="total_investment" value="10000000">
-                                </div>
-                                <div class="row g-2 mb-3">
-                                    <div class="col-6">
-                                        <div class="form-check mt-2">
-                                            <input type="checkbox" class="form-check-input" id="use_loc" checked>
-                                            <label class="form-check-label" style="font-weight:700;color:#555;">LOC 사용</label>
-                                        </div>
-                                    </div>
-                                    <div class="col-6">
-                                        <label class="form-label">LOC 할인율</label>
-                                        <div class="input-group">
-                                            <input type="number" class="form-control" id="loc_discount_pct" value="1.0" step="0.1">
-                                            <span class="input-group-text" style="background:#f0f4f8;border:1.5px solid #ddd;">%</span>
-                                        </div>
-                                    </div>
                                 </div>
                                 <hr style="border-color:#e8e8e8;">
                                 <div class="row g-2 mb-3">
@@ -178,6 +167,10 @@
                         <div id="placeholder" class="text-center py-5" style="color:#aaa;">
                             <p style="font-size:3rem;">📊</p>
                             <p style="font-weight:700;">설정 후 "백테스트 실행" 버튼을 누르세요</p>
+                            <p class="mt-2" style="font-size:0.85rem;color:#777;">
+                                <strong>T = 매수누적액 / 1회매수액</strong> (소수점 둘째 자리 올림)<br>
+                                <span id="star_formula">별% = 15 - 1.5T (TQQQ 기준)</span>
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -205,8 +198,9 @@
                                     <div class="col-6">
                                         <label class="form-label">분할 횟수</label>
                                         <select class="form-select" id="table_divisions">
-                                            <option value="20">20분할</option>
-                                            <option value="40" selected>40분할</option>
+                                            <option value="20">20분할 (고위험)</option>
+                                            <option value="30">30분할</option>
+                                            <option value="40" selected>40분할 (권장)</option>
                                         </select>
                                     </div>
                                     <div class="col-6">
@@ -216,6 +210,13 @@
                                             <span class="input-group-text" style="background:#f0f4f8;border:1.5px solid #ddd;">%</span>
                                         </div>
                                     </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">종목 코드</label>
+                                    <select class="form-select" id="table_ticker">
+                                        <option value="TQQQ" selected>TQQQ (별% = 15 - 1.5T)</option>
+                                        <option value="SOXL">SOXL (별% = 20 - 2T)</option>
+                                    </select>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">총 투자금 (원)</label>
@@ -245,7 +246,7 @@
         </div>
 
         <footer class="text-center mt-4 py-3">
-            무한매수법 시뮬레이터 v1.0 | ⚠️ 투자 손실 책임은 사용자에게 있습니다
+            무한매수법 V3.0 시뮬레이터 | ⚠️ 투자 손실 책임은 사용자에게 있습니다
         </footer>
     </div>
 
@@ -319,6 +320,7 @@
                 divisions: document.getElementById('table_divisions').value,
                 total_investment: document.getElementById('table_investment').value,
                 target_profit_pct: document.getElementById('table_profit').value,
+                ticker: document.getElementById('table_ticker').value,
                 use_loc: true,
                 loc_discount_pct: 1.0,
             };
@@ -336,6 +338,16 @@
                 }
             } catch (e) {
                 alert('요청 실패: ' + e.message);
+            }
+        }
+
+        function updateStarFormula() {
+            const ticker = document.getElementById('ticker').value;
+            const formulaEl = document.getElementById('star_formula');
+            if (ticker === 'TQQQ') {
+                formulaEl.textContent = '별% = 15 - 1.5T (TQQQ 기준)';
+            } else if (ticker === 'SOXL') {
+                formulaEl.textContent = '별% = 20 - 2T (SOXL 기준)';
             }
         }
     </script>

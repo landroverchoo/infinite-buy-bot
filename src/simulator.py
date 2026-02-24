@@ -1,5 +1,5 @@
 """
-백테스트 및 시뮬레이션
+백테스트 및 시뮬레이션 (V3.0)
 """
 import yfinance as yf
 import pandas as pd
@@ -9,22 +9,21 @@ import numpy as np
 from typing import Dict, List, Tuple
 import yaml
 
-from .strategy import InfiniteBuyStrategy, TradeRecord
+from .strategy import InfiniteBuyStrategyV3, TradeRecord
 
 
 class InfiniteBuySimulator:
-    """무한매수법 시뮬레이터 & 백테스트"""
+    """무한매수법 V3.0 시뮬레이터 & 백테스트"""
 
     def __init__(self, config_path: str):
         with open(config_path, 'r') as f:
             self.config = yaml.safe_load(f)
         
-        self.strategy = InfiniteBuyStrategy(
+        self.strategy = InfiniteBuyStrategyV3(
             total_investment=self.config['strategy']['total_investment'],
             divisions=self.config['strategy']['divisions'],
             target_profit_pct=self.config['strategy']['target_profit_pct'],
-            use_loc=self.config['strategy']['use_loc'],
-            loc_discount_pct=self.config['strategy']['loc_discount_pct'],
+            ticker=self.config['ticker'],
         )
         self.ticker = self.config['ticker']
         self.backtest_start = self.config['backtest']['start_date']
@@ -72,6 +71,7 @@ class InfiniteBuySimulator:
                 'Cycle': t.cycle,
                 'Round': t.round_num,
                 'Action': t.action,
+                'Half': t.half,
                 'Price': t.price,
                 'Shares': t.shares,
                 'Amount': t.amount,
@@ -79,6 +79,9 @@ class InfiniteBuySimulator:
                 'Avg Price': t.avg_price,
                 'Target Sell Price': t.target_sell_price,
                 'Remaining Budget': t.remaining_budget,
+                'T': t.t_value,
+                'Star %': t.star_pct,
+                'Unit Amount': t.unit_amount,
             })
         return pd.DataFrame(records)
 
@@ -90,28 +93,32 @@ class InfiniteBuySimulator:
 
         cycles = max(t.cycle for t in trades)
         completed_cycles = sum(1 for t in trades if t.action == 'sell')
-        
-        # 초기 투자금 (config 기준)
-        initial_investment = self.config['strategy']['total_investment']
-        
-        # 현재 가치 = 잔여투자금 + 보유주식 시가
+        total_return = 0.0
+        initial_investment = self.strategy.initial_investment
         last_trade = trades[-1]
-        last_close = self.data['Close'].iloc[-1]
+        last_close = self.data['Close'].iloc[-1] if not self.data.empty else 0.0
         if last_trade.action == 'sell':
             current_value = last_trade.remaining_budget
         else:
             current_value = last_trade.remaining_budget + last_trade.total_shares * last_close
-        
         total_return = (current_value / initial_investment - 1) * 100
 
-        # 최대 낙폭 (MDD) - 일별 포트폴리오 가치 기준
+        # 최대 낙폭 (MDD)
         max_drawdown = 0.0
+        df = self.get_trade_df()
+        if not df.empty and 'Total Shares' in df.columns and not df[df['Total Shares'] > 0].empty and not self.data.empty:
+            merged = self.data[['Date', 'Close']].merge(df, on='Date', how='left')
+            merged['Total Shares'] = merged['Total Shares'].ffill().fillna(0)
+            merged['Portfolio Value'] = merged['Total Shares'] * merged['Close']
+            merged['Peak'] = merged['Portfolio Value'].cummax()
+            merged['Drawdown'] = (merged['Portfolio Value'] - merged['Peak']) / merged['Peak'] * 100
+            max_drawdown = merged['Drawdown'].min() if not merged['Drawdown'].isna().all() else 0.0
 
         return {
             'total_return_pct': round(total_return, 2),
             'cycles_completed': completed_cycles,
             'total_cycles': cycles,
-            'max_drawdown_pct': round(max_drawdown, 2),
+            'max_drawdown_pct': round(max_drawdown, 2) if max_drawdown != float('nan') else 0.0,
         }
 
     def plot_performance(self, save_path: str = None):
@@ -135,11 +142,11 @@ class InfiniteBuySimulator:
 
         # 1) 가격 차트 + 매수/매도 포인트
         ax1.plot(merged['Date'], merged['Close'], label=f"{self.ticker} Close", alpha=0.5)
-        buy_points = merged[merged['Action'] == 'buy']
+        buy_points = merged[merged['Action'].str.contains('buy')]
         sell_points = merged[merged['Action'] == 'sell']
         ax1.scatter(buy_points['Date'], buy_points['Price'], color='green', marker='^', s=100, label='Buy')
         ax1.scatter(sell_points['Date'], sell_points['Price'], color='red', marker='v', s=100, label='Sell')
-        ax1.set_title(f"Infinite Buy Strategy - {self.ticker}")
+        ax1.set_title(f"Infinite Buy Strategy V3.0 - {self.ticker}")
         ax1.set_ylabel("Price")
         ax1.legend()
         ax1.grid(True)

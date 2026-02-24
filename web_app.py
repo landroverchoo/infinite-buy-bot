@@ -1,5 +1,5 @@
 """
-무한매수법 웹 UI (Flask)
+무한매수법 V3.0 웹 UI (Flask)
 """
 from flask import Flask, render_template, request, jsonify, send_file
 import yaml
@@ -10,8 +10,9 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
-from src.strategy import InfiniteBuyStrategy
+from src.strategy import InfiniteBuyStrategyV3
 from src.simulator import InfiniteBuySimulator
+
 from src.order_table import OrderTableGenerator
 
 app = Flask(__name__)
@@ -95,12 +96,11 @@ def generate_order_table():
     """주문 표 API"""
     data = request.json
     
-    strategy = InfiniteBuyStrategy(
+    strategy = InfiniteBuyStrategyV3(
         total_investment=float(data.get('total_investment', 10000000)),
         divisions=int(data.get('divisions', 40)),
         target_profit_pct=float(data.get('target_profit_pct', 5.0)),
-        use_loc=data.get('use_loc', True),
-        loc_discount_pct=float(data.get('loc_discount_pct', 1.0)),
+        ticker=data.get('ticker', 'TQQQ'),
     )
     gen = OrderTableGenerator(strategy)
     df = gen.generate_table(
@@ -126,11 +126,11 @@ def generate_chart_b64(sim):
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(14, 8), sharex=True)
     
     ax1.plot(range(len(merged)), merged['Close'], label=f"{sim.ticker} Close", alpha=0.6, color='#2196F3')
-    buy_idx = merged[merged['Action'] == 'buy'].index
+    buy_idx = merged[merged['Action'].str.contains('buy')].index
     sell_idx = merged[merged['Action'] == 'sell'].index
     ax1.scatter(buy_idx, merged.loc[buy_idx, 'Price'], color='#4CAF50', marker='^', s=60, label='Buy', zorder=5)
     ax1.scatter(sell_idx, merged.loc[sell_idx, 'Price'], color='#F44336', marker='v', s=60, label='Sell', zorder=5)
-    ax1.set_title(f"Infinite Buy Strategy - {sim.ticker}", fontsize=14, fontweight='bold')
+    ax1.set_title(f"Infinite Buy Strategy V3.0 - {sim.ticker}", fontsize=14, fontweight='bold')
     ax1.set_ylabel("Price ($)")
     ax1.legend()
     ax1.grid(True, alpha=0.3)
