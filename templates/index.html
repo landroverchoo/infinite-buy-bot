@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>라오어 무한매수법 시뮬레이터</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #1a1a2e; color: #eee; font-family: 'Segoe UI', sans-serif; }
+        .card { background: #16213e; border: 1px solid #0f3460; border-radius: 12px; }
+        .card-header { background: #0f3460; border-radius: 12px 12px 0 0 !important; }
+        .btn-primary { background: #e94560; border: none; }
+        .btn-primary:hover { background: #c73e54; }
+        .btn-success { background: #4CAF50; border: none; }
+        .form-control, .form-select { background: #1a1a2e; color: #eee; border: 1px solid #0f3460; }
+        .form-control:focus, .form-select:focus { background: #1a1a2e; color: #eee; border-color: #e94560; box-shadow: 0 0 0 0.2rem rgba(233,69,96,0.25); }
+        .table { color: #eee; }
+        .table-striped>tbody>tr:nth-of-type(odd) { color: #eee; background-color: rgba(15,52,96,0.3); }
+        .hero { text-align: center; padding: 40px 0 20px; }
+        .hero h1 { font-size: 2.5rem; font-weight: bold; }
+        .hero .subtitle { color: #e94560; font-size: 1.2rem; }
+        .stat-card { background: #0f3460; border-radius: 10px; padding: 20px; text-align: center; }
+        .stat-card .value { font-size: 2rem; font-weight: bold; color: #e94560; }
+        .stat-card .label { color: #aaa; font-size: 0.9rem; }
+        #loading { display: none; }
+        .spinner-border { width: 3rem; height: 3rem; }
+        .tab-content { padding-top: 20px; }
+        .nav-tabs .nav-link { color: #aaa; }
+        .nav-tabs .nav-link.active { background: #16213e; color: #e94560; border-color: #0f3460 #0f3460 #16213e; }
+    </style>
+</head>
+<body>
+    <div class="container py-4">
+        <div class="hero">
+            <h1>🚀 무한매수법 시뮬레이터</h1>
+            <p class="subtitle">라오어의 무한매수 전략 백테스트 & 주문 표 생성</p>
+        </div>
+
+        <!-- 탭 -->
+        <ul class="nav nav-tabs" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link active" data-bs-toggle="tab" href="#backtest-tab">📊 백테스트</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="tab" href="#table-tab">📋 주문 표</a>
+            </li>
+        </ul>
+
+        <div class="tab-content">
+            <!-- 백테스트 탭 -->
+            <div class="tab-pane fade show active" id="backtest-tab">
+                <div class="row mt-3">
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header"><h5 class="mb-0">⚙️ 설정</h5></div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label class="form-label">종목 코드</label>
+                                    <input type="text" class="form-control" id="ticker" value="TQQQ">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">분할 횟수</label>
+                                    <select class="form-select" id="divisions">
+                                        <option value="20">20분할</option>
+                                        <option value="40" selected>40분할</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">총 투자금 (원)</label>
+                                    <input type="number" class="form-control" id="total_investment" value="10000000">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">목표 수익률 (%)</label>
+                                    <input type="number" class="form-control" id="target_profit_pct" value="5.0" step="0.5">
+                                </div>
+                                <div class="mb-3 form-check">
+                                    <input type="checkbox" class="form-check-input" id="use_loc" checked>
+                                    <label class="form-check-label">LOC 주문 사용</label>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">LOC 할인율 (%)</label>
+                                    <input type="number" class="form-control" id="loc_discount_pct" value="1.0" step="0.1">
+                                </div>
+                                <hr>
+                                <div class="mb-3">
+                                    <label class="form-label">시작일</label>
+                                    <input type="date" class="form-control" id="start_date" value="2024-01-01">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">종료일</label>
+                                    <input type="date" class="form-control" id="end_date" value="2024-12-31">
+                                </div>
+                                <button class="btn btn-primary w-100" onclick="runBacktest()">
+                                    🚀 백테스트 실행
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-8">
+                        <!-- 로딩 -->
+                        <div id="loading" class="text-center py-5">
+                            <div class="spinner-border text-danger" role="status"></div>
+                            <p class="mt-3">데이터 가져오는 중... ⏳</p>
+                        </div>
+
+                        <!-- 결과 -->
+                        <div id="results" style="display:none;">
+                            <!-- 성과 카드 -->
+                            <div class="row mb-3" id="stats-row"></div>
+
+                            <!-- 차트 -->
+                            <div class="card mb-3">
+                                <div class="card-header"><h5 class="mb-0">📈 차트</h5></div>
+                                <div class="card-body text-center">
+                                    <img id="chart-img" class="img-fluid" style="border-radius: 8px;">
+                                </div>
+                            </div>
+
+                            <!-- 매매 기록 -->
+                            <div class="card">
+                                <div class="card-header"><h5 class="mb-0">📝 매매 기록</h5></div>
+                                <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                                    <div id="trades-table"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 주문 표 탭 -->
+            <div class="tab-pane fade" id="table-tab">
+                <div class="row mt-3">
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header"><h5 class="mb-0">⚙️ 시뮬레이션 설정</h5></div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label class="form-label">시작 가격</label>
+                                    <input type="number" class="form-control" id="start_price" value="100" step="1">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">회차별 가격 변화율 (%)</label>
+                                    <input type="number" class="form-control" id="price_step" value="-1.0" step="0.5">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">분할 횟수</label>
+                                    <select class="form-select" id="table_divisions">
+                                        <option value="20">20분할</option>
+                                        <option value="40" selected>40분할</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">총 투자금 (원)</label>
+                                    <input type="number" class="form-control" id="table_investment" value="10000000">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">목표 수익률 (%)</label>
+                                    <input type="number" class="form-control" id="table_profit" value="5.0" step="0.5">
+                                </div>
+                                <button class="btn btn-success w-100" onclick="generateTable()">
+                                    📋 주문 표 생성
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="card">
+                            <div class="card-header"><h5 class="mb-0">📋 주문 표</h5></div>
+                            <div class="card-body" style="max-height: 600px; overflow-y: auto;">
+                                <div id="order-table">
+                                    <p class="text-muted text-center py-5">설정 후 "주문 표 생성" 버튼을 클릭하세요</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer class="text-center mt-4 py-3" style="color: #555;">
+            라오어 무한매수법 시뮬레이터 v1.0 | ⚠️ 투자 손실 책임은 사용자에게 있습니다
+        </footer>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        async function runBacktest() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('results').style.display = 'none';
+
+            const payload = {
+                ticker: document.getElementById('ticker').value,
+                divisions: document.getElementById('divisions').value,
+                total_investment: document.getElementById('total_investment').value,
+                target_profit_pct: document.getElementById('target_profit_pct').value,
+                use_loc: document.getElementById('use_loc').checked,
+                loc_discount_pct: document.getElementById('loc_discount_pct').value,
+                start_date: document.getElementById('start_date').value,
+                end_date: document.getElementById('end_date').value,
+            };
+
+            try {
+                const resp = await fetch('/api/backtest', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload),
+                });
+                const data = await resp.json();
+
+                if (data.success) {
+                    // 성과 카드
+                    const perf = data.performance;
+                    const investment = parseInt(payload.total_investment).toLocaleString();
+                    document.getElementById('stats-row').innerHTML = `
+                        <div class="col-3"><div class="stat-card">
+                            <div class="value">${perf.total_return_pct}%</div>
+                            <div class="label">총 수익률</div>
+                        </div></div>
+                        <div class="col-3"><div class="stat-card">
+                            <div class="value">${perf.cycles_completed}</div>
+                            <div class="label">완료 사이클</div>
+                        </div></div>
+                        <div class="col-3"><div class="stat-card">
+                            <div class="value">${perf.total_cycles}</div>
+                            <div class="label">총 사이클</div>
+                        </div></div>
+                        <div class="col-3"><div class="stat-card">
+                            <div class="value">${data.total_trades}</div>
+                            <div class="label">총 매매 횟수</div>
+                        </div></div>
+                    `;
+
+                    // 차트
+                    if (data.chart) {
+                        document.getElementById('chart-img').src = 'data:image/png;base64,' + data.chart;
+                    }
+
+                    // 매매 기록
+                    document.getElementById('trades-table').innerHTML = data.trades_html;
+
+                    document.getElementById('results').style.display = 'block';
+                } else {
+                    alert('오류: ' + data.error);
+                }
+            } catch (e) {
+                alert('요청 실패: ' + e.message);
+            }
+
+            document.getElementById('loading').style.display = 'none';
+        }
+
+        async function generateTable() {
+            const payload = {
+                start_price: document.getElementById('start_price').value,
+                price_step: document.getElementById('price_step').value,
+                divisions: document.getElementById('table_divisions').value,
+                total_investment: document.getElementById('table_investment').value,
+                target_profit_pct: document.getElementById('table_profit').value,
+                use_loc: true,
+                loc_discount_pct: 1.0,
+            };
+
+            try {
+                const resp = await fetch('/api/order_table', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload),
+                });
+                const data = await resp.json();
+                if (data.success) {
+                    document.getElementById('order-table').innerHTML = data.table_html;
+                } else {
+                    alert('오류: ' + data.error);
+                }
+            } catch (e) {
+                alert('요청 실패: ' + e.message);
+            }
+        }
+    </script>
+</body>
+</html>
