@@ -10,11 +10,6 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
-from src.strategy import InfiniteBuyStrategyV3
-from src.simulator import InfiniteBuySimulator
-
-from src.order_table import OrderTableGenerator
-
 app = Flask(__name__)
 
 DEFAULT_CONFIG = {
@@ -42,8 +37,13 @@ def index():
 @app.route('/api/backtest', methods=['POST'])
 def run_backtest():
     """백테스트 API"""
+    try:
+        from src.simulator import InfiniteBuySimulator
+    except ImportError as e:
+        return jsonify({'success': False, 'error': f'백테스트 의존성 부재: {str(e)}. yfinance를 설치해주세요.'}), 503
+
     data = request.json
-    
+
     # 임시 config 파일 생성
     config = {
         'strategy': {
@@ -94,8 +94,11 @@ def run_backtest():
 @app.route('/api/order_table', methods=['POST'])
 def generate_order_table():
     """주문 표 API"""
+    from src.strategy import InfiniteBuyStrategyV3
+    from src.order_table import OrderTableGenerator
+
     data = request.json
-    
+
     strategy = InfiniteBuyStrategyV3(
         total_investment=float(data.get('total_investment', 10000000)),
         divisions=int(data.get('divisions', 40)),
