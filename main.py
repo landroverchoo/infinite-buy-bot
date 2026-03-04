@@ -4,9 +4,6 @@
 import argparse
 import os
 import sys
-from src.simulator import InfiniteBuySimulator
-from src.order_table import OrderTableGenerator
-from src.strategy import InfiniteBuyStrategy
 
 
 def parse_args():
@@ -35,6 +32,7 @@ def parse_args():
 
 
 def run_backtest(args):
+    from src.simulator import InfiniteBuySimulator
     sim = InfiniteBuySimulator(args.config)
     print("Fetching data...")
     sim.fetch_data()
@@ -53,16 +51,17 @@ def run_backtest(args):
 
 
 def generate_order_table(args):
-    # config에서 strategy 설정 읽기
     import yaml
+    from src.strategy import InfiniteBuyStrategyV3
+    from src.order_table import OrderTableGenerator
+    # config에서 strategy 설정 읽기
     with open(args.config, 'r') as f:
         cfg = yaml.safe_load(f)
-    strategy = InfiniteBuyStrategy(
+    strategy = InfiniteBuyStrategyV3(
         total_investment=cfg['strategy']['total_investment'],
         divisions=cfg['strategy']['divisions'],
         target_profit_pct=cfg['strategy']['target_profit_pct'],
-        use_loc=cfg['strategy']['use_loc'],
-        loc_discount_pct=cfg['strategy']['loc_discount_pct'],
+        ticker=cfg.get('ticker', 'TQQQ'),
     )
     gen = OrderTableGenerator(strategy)
     df = gen.generate_table(
